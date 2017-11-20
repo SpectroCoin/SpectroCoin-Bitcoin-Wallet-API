@@ -10,14 +10,15 @@ This document describes [SpectroCoin](https://spectrocoin.com) wallet service AP
    * [POST /oauth2/auth](#post-oauth2auth)
    * [POST /oauth2/refresh](#post-oauth2refresh)
    * [POST /wallet/send/{currency}](#post-walletsendcurrency)
+   * [GET /wallet/deposit/{currency}/last](#get-walletdepositcurrencylast)
+   * [GET /wallet/deposit/{currency}/fresh](#get-walletdepositcurrencyfresh)
    * [GET /wallet/exchange/calculate/buy](#get-walletexchangecalculatebuy)
    * [GET /wallet/exchange/calculate/sell](#get-walletexchangecalculatesell)
    * [POST /wallet/exchange/buy](#post-walletexchangebuy)
    * [POST /wallet/exchange/sell](#post-walletexchangesell)
    * [GET /wallet/accounts](#get-walletaccounts)
    * [GET /wallet/account/{accountId}](#get-walletaccountaccountid)
-   * [GET /wallet/deposit/{currency}/last](#get-walletdepositcurrencylast)
-   * [GET /wallet/deposit/{currency}/fresh](#get-walletdepositcurrencyfresh)
+   * [GET /send/status/{paymentId}](#get-sendstatuspaymentid)
 * [Errors](#errors)
   * [Validation error](#validation-error)
   * [Error codes](#error-codes)
@@ -50,7 +51,7 @@ SpectroCoin use two services:
 1. To get access tokens (access and refresh tokens) you must call [**/oath2/auth**](#post-oauth2auth) REST method providing required fields.
 2. Response will contain token information (access_token, refresh_token, scope, expires_in..). Having access tokens you can build Authorization header value.
 3. All other REST methods within security scope **must have extra HTTP header** - ``Authorization``. Value should start with Bearer space and access token
-``Bearer 42e0f8d6cc2f30de2b1dad7cc2df5455b6d05308e6e06495c766dcb43853ba6d17b77b7623899625``
+  ``Bearer 42e0f8d6cc2f30de2b1dad7cc2df5455b6d05308e6e06495c766dcb43853ba6d17b77b7623899625``
 
 ### Access tokens life time
 
@@ -65,12 +66,12 @@ Method to authenticate user and get access tokens to use wallet REST API. Refres
 
 ### Request
 
-Field	| Type	| Required  |	Example
-------|-------|-----------|--------
-client_id	| String	|+	| wallet_8f452af79dcb7fed5979d11cc33910bb
-client_secret |	String	| +	| test-secret
-version |	String	| + |	1.0
-scope |	String	| +	| send_currency currency_exchange user_account
+| Field         | Type   | Required | Example                                  |
+| ------------- | ------ | -------- | ---------------------------------------- |
+| client_id     | String | +        | wallet_8f452af79dcb7fed5979d11cc33910bb  |
+| client_secret | String | +        | test-secret                              |
+| version       | String | +        | 1.0                                      |
+| scope         | String | +        | send_currency currency_exchange user_account |
 
 Example HTTP request:
 
@@ -93,13 +94,13 @@ Host: spectrocoin.com
 
 Possible validation error codes: [1, 1003, 2001](#error-codes)
 
-Field	| Type  |	Always return	| Example
-------|-------|---------------|--------
-access_token  |	String  |	+ |	42e0f8d6cc2f30d...2df5455b6d05308e6e064b99625
-expires_in  |	String	| +	| 300 (seconds)
-refresh_token	| String  |	+	| 3cbba02103fb479...21923fe35038ccf4ebbc8fe6084
-scope	| String	| +	| send_currency currency_exchange user_account
-token_type  |	String	| -	| bearer
+| Field         | Type   | Always return | Example                                  |
+| ------------- | ------ | ------------- | ---------------------------------------- |
+| access_token  | String | +             | 42e0f8d6cc2f30d...2df5455b6d05308e6e064b99625 |
+| expires_in    | String | +             | 300 (seconds)                            |
+| refresh_token | String | +             | 3cbba02103fb479...21923fe35038ccf4ebbc8fe6084 |
+| scope         | String | +             | send_currency currency_exchange user_account |
+| token_type    | String | -             | bearer                                   |
 
 JSON Response example:
 ```http
@@ -117,12 +118,12 @@ Method to exchange user wallet REST API refresh token to new pair of oauth2 toke
 
 ### Request
 
-Field	| Type	| Required  |	Example
-------|-------|-----------|--------
-client_id	| String	| +	| wallet_8f452af79dcb7fed5979d11cc33910bb
-client_secret	| String  |	+ |	test-secret
-refresh_token	| String	| +	| cfee255c08b61b08...1588a4de1fc75a89b529619
-version	| String	| +	| 1.0
+| Field         | Type   | Required | Example                                  |
+| ------------- | ------ | -------- | ---------------------------------------- |
+| client_id     | String | +        | wallet_8f452af79dcb7fed5979d11cc33910bb  |
+| client_secret | String | +        | test-secret                              |
+| refresh_token | String | +        | cfee255c08b61b08...1588a4de1fc75a89b529619 |
+| version       | String | +        | 1.0                                      |
 
 Example HTTP request:
 
@@ -145,13 +146,13 @@ Host: spectrocoin.com
 
 Possible validation error codes: [1, 1003, 2001, 2003](#error-codes)
 
-Field	| Type  |	Always return	| Example
-------|-------|---------------|--------
-access_token	| String	| +	| f6f2e066917...3cd28756350041fd00c8ff741e0c1bf
-expires_in	| String	| +	| 300 (seconds)
-refresh_token	| String  |	+	| f4a74245757...be20d23fc81cff0750613cd319abaf1
-scope	| String  |	+	| send_currency currency_exchange user_account
-token_type  |	String	| -	| bearer
+| Field         | Type   | Always return | Example                                  |
+| ------------- | ------ | ------------- | ---------------------------------------- |
+| access_token  | String | +             | f6f2e066917...3cd28756350041fd00c8ff741e0c1bf |
+| expires_in    | String | +             | 300 (seconds)                            |
+| refresh_token | String | +             | f4a74245757...be20d23fc81cff0750613cd319abaf1 |
+| scope         | String | +             | send_currency currency_exchange user_account |
+| token_type    | String | -             | bearer                                   |
 
 JSON Response example:
 ```http
@@ -177,26 +178,31 @@ Operation to send currency to receiver (bitcoin address, dash address, email add
 
 ### Security
 
-Schema	| Scope
-------|-------
-OAuth2	|	send_currency
+| Schema | Scope         |
+| ------ | ------------- |
+| OAuth2 | send_currency |
 
 ### Path parameters
-Field	| Type	| Required  |	Example
-------|-------|-----------|--------
-currency	| String	| +	| EUR, BTC, DASH
+| Field    | Type   | Required | Example             |
+| -------- | ------ | -------- | ------------------- |
+| currency | String | +        | EUR, BTC, DASH, XEM |
 
 ### Request
 
-Field	| Type	| Required  |	Example
-------|-------|-----------|--------
-amount	| Double	| +	| 13.19, 0.00145021
-receiver	| String  |	+ |	test_cs7@spectrocoin.com, 12KKCFWLPayT8VAbhHRhs7VCS1LPUGGfqv
+| Field    | Type   | Required | Example                                  |
+| -------- | ------ | -------- | ---------------------------------------- |
+| amount   | Double | +        | 13.19, 0.00145021                        |
+| receiver | String | +        | test_cs7@spectrocoin.com, 12KKCFWLPayT8VAbhHRhs7VCS1LPUGGfqv |
+| message  | String | -        | ip8RTyNs                                 |
+
+This variable `message` is usable for XEM send.
+
+
 
 Example HTTP request:
 
 ```http
-POST https://spectrocoin.com/api/r/wallet/send/EUR
+POST https://spectrocoin.com/api/r/wallet/send/BTC
 Authorization: Bearer 42e0f8d6cc2f30de2b1dad7cc2df5455b6d05308e6e06495c766dcb43853ba6d17b77b7623899625
 Connection: Keep-Alive
 Content-Length: 47
@@ -211,7 +217,31 @@ Host: spectrocoin.com
 ]
 ```
 
+
+
+Example HTTP request send XEM:
+
+```http
+POST https://spectrocoin.com/api/r/wallet/send/XEM
+Authorization: Bearer 42e0f8d6cc2f30de2b1dad7cc2df5455b6d05308e6e06495c766dcb43853ba6d17b77b7623899625
+Connection: Keep-Alive
+Content-Length: 47
+Content-Type: application/json
+Host: spectrocoin.com
+
+[
+  {
+	"amount": 2,
+	"receiver": "TAVISI7ETMVMS2C7CN6V2X6AUUGZQYVJ7GLZYP5O",
+	"message": "zZnXgCoN"
+  }
+]
+```
+
+
+
 Example for multiple BTC receivers:
+
 ```http
 POST https://spectrocoin.com/api/r/wallet/send/BTC
 Authorization: Bearer 42e0f8d6cc2f30de2b1dad7cc2df5455b6d05308e6e06495c766dcb43853ba6d17b77b7623899625
@@ -237,17 +267,59 @@ Host: spectrocoin.com
 
 Possible validation error codes: [1, 1001, 1003, 1004, 1005, 1008, 3001, 3002, 3003, 3005, 3006, 3016, 3017 5003, 5021](#error-codes)
 
-Field	| Type  |	Always return	| Example
-------|-------|---------------|--------
-paymentId	| Long	| +	| 153
-withdrawAmount	| Double	| +	| 13.19, 0.00145021
-receiveAmount	| Double  |	+	| 13.19, 0.00145021
-currency	| String  |	+	| EUR, BTC, USD...
-status  |	String	| -	| Statuses: `NEW`, `PENDING` or `PAID`
+| Field            | Type             | Always return | Example                                  |
+| ---------------- | ---------------- | ------------- | ---------------------------------------- |
+| paymentId        | Long             | +             | 153                                      |
+| withdrawAmount   | Double           | +             | 13.19, 0.00145021                        |
+| receiveAmount    | Double           | +             | 13.19, 0.00145021                        |
+| currency         | String           | +             | EUR, BTC, USD...                         |
+| status           | String           | -             | Statuses: `NEW`, `PENDING` `FAILED` or `PAID` |
+| receiver         | String           | +             | test@spectrocoin.com, 12KKCFWLPayT8VAbhHRhs7VCS1LPUGGfqv |
+| message          | String           | -             | cGkSx732                                 |
+| sendCurrencyData | SendCurrencyData | +             | "sendCurrencyData":{...}                 |
+
+This variable `paymentId` is obsolete.
+
+This variable `withdrawAmount`is obsolete.
+
+This variable `receiveAmount` is obsolete.
+
+This variable `currency` is obsolete.
+
+This variable `status` is obsolete.
+
+This variable `receiver` is obsolete.
+
+This variable `message`  is obsolete.
+
+**SendCurrencyData**
+
+| Field          | Type      | Always return | Example                                  |
+| -------------- | --------- | ------------- | ---------------------------------------- |
+| paymentId      | Long      | +             | 153                                      |
+| withdrawAmount | Double    | +             | 13.19, 0.00145021                        |
+| receiveAmount  | Double    | +             | 13.19, 0.00145021                        |
+| currency       | String    | +             | EUR, BTC, USD...                         |
+| status         | String    | -             | Statuses: `NEW`, `PENDING` `FAILED` or `PAID` |
+| receiver       | String    | +             | test@spectrocoin.com                     |
+| message        | String    | -             | cGkSx732                                 |
+| error          | ErrorInfo | -             | "error":{...}                            |
+
+Variable `message` could be returned only if send was made to XEM address and message was specified.
+
+**ErrorInfo**
+
+| Field   | Type   | Always return | Example                                 |
+| ------- | ------ | ------------- | --------------------------------------- |
+| code    | short  | +             | 3005                                    |
+| message | String | +             | Sender and receiver should be different |
+
+
 
 * `NEW` – initial status, should be processed in near future or manually 
 * `PENDING` – money from sender account is charged and reserved for receiver
 * `PAID` – receiver got money
+* `FAILED` - send failed
 
 JSON Response example:
 ```json
@@ -256,40 +328,240 @@ JSON Response example:
    "withdrawAmount": 13.19,
    "receiveAmount": 13.19,
    "currency": "EUR",
-   "status": "PAID"
+   "status": "PAID",
+   "receiver": "test@spectrocoin.com",
+   "sendCurrencyData" {
+    	"paymentId": "153",
+   		"withdrawAmount": 13.19,
+   		"receiveAmount": 13.19,
+   		"currency": "EUR",
+   		"status": "PAID"
+  		"receiver": "test@spectrocoin.com"
+	}
 }
 ```
 
 Validation example:
-```http
+
+```json
 [
       {
-      "code": 1,
-      "message": "amount is required"
-   },
-      {
-      "code": 1,
-      "message": "receiver is required"
-   }
+      "code": 3005,
+      "message": "Sender and receiver should be different"
+   	  },
 ]
 ```
 
+Response example bulk send with failed transaction:
+
+```json
+{"sendCurrencyData:[
+ {
+ "paymentId":205,
+ "withdrawAmount":0.30000000,
+ "receiveAmount":0.30000000,
+ "currency":"BTC",
+ "status":"PAID",
+ "receiver":"12KKCFWLPayT8VAbhHRhs7VCS1LPUGGfqv"
+},
+{
+  "paymentId":206,
+  "withdrawAmount":0.30000000,
+  "receiveAmount":0.30000000,
+  "currency":"BTC",
+  "status":"PAID",
+  "receiver":"test@spectrocoin.com"
+},
+{
+  "withdrawAmount":0.003,
+  "receiveAmount":0.003,
+  "status":"FAILED",
+  "receiver":"wallet@spectrocoin.com"
+  "error":
+    {
+     "code":3005,
+     "message":"Sender and receiver should be different"
+    },
+}
+]}
+```
+
+
+
+## GET /wallet/deposit/{currency}/last 
+
+Method to get a current Bitcoin address to receive funds (can also be used to get DASH, ETH, XEM address).
+
+### Security
+
+| Schema | Scope        |      |
+| ------ | ------------ | ---- |
+| OAuth2 | user_account |      |
+
+### **Path parameters**
+
+| Field    | Type   | Required | Example             |
+| -------- | ------ | -------- | ------------------- |
+| currency | String | +        | BTC, DASH, ETH, XEM |
+
+### **Response**
+
+Returns Bitcoin address (or DASH, ETH, XEM address).
+
+Possible validation error codes: [**1, 1003, 1004, 1012**](#introduction/wallet-api/errors)
+
+| Field         | Type   | Always return | Example                            |
+| ------------- | ------ | ------------- | ---------------------------------- |
+| btcAddress    | String | -             | 1M4bqMd471TTwNtUSeHPhSW5qQy1Y48p5b |
+| cryptoAddress | String | +             | 1M4bqMd471TTwNtUSeHPhSW5qQy1Y48p5b |
+| currency      | String | +             | BTC                                |
+| message       | String | -             | zZnXgCoN                           |
+
+This variable `btcAddress` is obsolete.
+
+This variable `message` is returned when getting XEM address.
+
++ Parameters
+
+    + currency: BTC - type currency name (BTC, DASH, ETH, XEM)
+
++ Example request get last BTC address:
+
+    ```http
+    GET https://spectrocoin.com/api/r/wallet/deposit/BTC/last
+    Authorization: Bearer f6f2e0669172035b98a241d6e2afdf531184a400ec8321e1f3cd28756350041fd00c8ff741e0c1bf
+    Connection: Keep-Alive
+    ```
+
++ JSON Example response BTC address: 
+
+    ​
+
+    ```json
+    {
+        "cryptoAddress": "1M4bqMd471TTwNtUSeHPhSW5qQy1Y48p5b",
+        "currency": "BTC"
+    }
+    ```
+
++ Example response DASH address:
+
+    ​
+
+    ```json
+    {
+        "cryptoAddress": "Xxbit2NkZ4YfAyrgWCSQtRzDjvPJyPFZ4n",
+        "currency": "DASH"
+    }
+    ```
+
+- Example response XEM address: 
+
+  ​
+
+  ```json
+  {
+      "cryptoAddress": "TAVISI7ETMVMS2C7CN6V2X6AUUGZQYVJ7GLZYP5O",
+      "currency": "XEM"
+      "message": "zZnXgCoN"
+  }
+  ```
+
+
+
+## GET /wallet/deposit/{currency}/fresh 
+
+Method used to generate new Bitcoin addresses (can also be used to generate new DASH and XEM addresses).
+
+### **Security**
+
+| Schema | Scope        |      |
+| ------ | ------------ | ---- |
+| OAuth2 | user_account |      |
+
+### **Path parameters**
+
+| Field    | Type   | Required | Example        |
+| -------- | ------ | -------- | -------------- |
+| currency | String | +        | BTC, DASH, XEM |
+
+### **Response**
+
+Return new Bitcoin address.
+
+Possible validation error codes: [**1, 1003, 1004, 1012**](#introduction/wallet-api/errors)
+
+| Field         | Type   | Always return | Example                            |
+| ------------- | ------ | ------------- | ---------------------------------- |
+| btcAddress    | String | -             | 1Bm3ENaZrtrExi56ywM6DWKQgJDmsrMQ41 |
+| cryptoAddress | String | +             | 1Bm3ENaZrtrExi56ywM6DWKQgJDmsrMQ41 |
+| currency      | String | +             | BTC, DASH, XEM                     |
+| message       | String | -             | zZnXgCoN                           |
+
+This variable `btcAddress` is obsolete.
+
+This variable `message` is returned when generating XEM address
+
++ Parameters
+
+    + currency: BTC - type currency name (BTC, DASH, XEM)
+
++ Example request generate XEM address:
+
+    ```http
+    GET https://spectrocoin.com/api/r/wallet/deposit/XEM/fresh
+    Authorization: Bearer f6f2e0669172035b98a241d6e2afdf531184a400ec8321e1f3cd28756350041fd00c8ff741e0c1bf
+    Connection: Keep-Alive
+    ```
+
++ Example response BTC address:
+
+    ```json
+    {
+        "btcAddress": "19ewwHxeppY74bnT1wrT6kM1ymCWdJLkVG",
+        "cryptoAddress": "19ewwHxeppY74bnT1wrT6kM1ymCWdJLkVG",
+        "currency": "BTC"
+    }
+    ```
+
++ Example response DASH address:
+
+    ```json
+    {
+        "cryptoAddress": "Xxbit2NkZ4YfAyrgWCSQtRzDjvPJyPFZ4n",
+        "currency": "DASH"
+    }
+    ```
+
+- Example response XEM address:
+
+  ```json
+  {
+      "cryptoAddress": "Xxbit2NkZ4YfAyrgWCSQtRzDjvPJyPFZ4n",
+      "currency": "XEM"
+      "message": "zZnXgCoN"
+  }
+  ```
+
+
+
 ## GET /wallet/exchange/calculate/buy
+
 Operation used to calculate needed pay amount to receive required receive amount at the current moment.
 
 ### Security
 
-Schema	| Scope
-------|-------
-OAuth2	|	currency_exchange
+| Schema | Scope             |
+| ------ | ----------------- |
+| OAuth2 | currency_exchange |
 
 ### Request
 
-Field	| Type	| Required  |	Example
-------|-------|-----------|--------
-receiveAmount	| Double	| +	| 0.00212015, 3.01
-receiveCurrency	| String  |	+ |	BTC
-payCurrency | String  |	+	|	EUR
+| Field           | Type   | Required | Example          |
+| --------------- | ------ | -------- | ---------------- |
+| receiveAmount   | Double | +        | 0.00212015, 3.01 |
+| receiveCurrency | String | +        | BTC              |
+| payCurrency     | String | +        | EUR              |
 
 Example HTTP request:
 
@@ -304,10 +576,10 @@ Host: spectrocoin.com
 
 Possible validation error codes: [1, 1003, 1004, 1005, 7008](#error-codes)
 
-Field	| Type  |	Always return	| Example
-------|-------|---------------|--------
-payAmount	| Double	| +	| 2.35
-payCurrency	| String  |	+	| EUR
+| Field       | Type   | Always return | Example |
+| ----------- | ------ | ------------- | ------- |
+| payAmount   | Double | +             | 2.35    |
+| payCurrency | String | +             | EUR     |
 
 JSON Response example:
 ```http
@@ -322,17 +594,17 @@ Operation used to calculate receive amount of currency exchange using pay amount
 
 ### Security
 
-Schema	| Scope
-------|-------
-OAuth2	|	currency_exchange
+| Schema | Scope             |
+| ------ | ----------------- |
+| OAuth2 | currency_exchange |
 
 ### Request
 
-Field	| Type	| Required  |	Example
-------|-------|-----------|--------
-payAmount	| Double	| +	| 10.15, 14.80219015
-receiveCurrency	| String  |	+ |	BTC
-payCurrency |	String	|	+	|	EUR
+| Field           | Type   | Required | Example            |
+| --------------- | ------ | -------- | ------------------ |
+| payAmount       | Double | +        | 10.15, 14.80219015 |
+| receiveCurrency | String | +        | BTC                |
+| payCurrency     | String | +        | EUR                |
 
 Example HTTP request:
 
@@ -347,10 +619,10 @@ Host: spectrocoin.com
 
 Possible validation error codes: [1, 1003, 1004, 1005, 7008](#error-codes)
 
-Field	| Type  |	Always return	| Example
-------|-------|---------------|--------
-receiveAmount	| Double	| +	| 19.23, 0.0001257
-receiveCurrency	| String  |	+	| EUR
+| Field           | Type   | Always return | Example          |
+| --------------- | ------ | ------------- | ---------------- |
+| receiveAmount   | Double | +             | 19.23, 0.0001257 |
+| receiveCurrency | String | +             | EUR              |
 
 JSON Response example:
 ```http
@@ -365,17 +637,17 @@ Operation used to buy requested amount of receive currency while paying with pay
 
 ### Security
 
-Schema	| Scope
-------|-------
-OAuth2	|	currency_exchange
+| Schema | Scope             |
+| ------ | ----------------- |
+| OAuth2 | currency_exchange |
 
 ### Request
 
-Field	| Type	| Required  |	Example
-------|-------|-----------|--------
-receiveAmount	| Double	| +	| 3.01, 0.04610103
-receiveCurrency	| String  |	+ |	USD
-payCurrency |	String	|	+	|	EUR
+| Field           | Type   | Required | Example          |
+| --------------- | ------ | -------- | ---------------- |
+| receiveAmount   | Double | +        | 3.01, 0.04610103 |
+| receiveCurrency | String | +        | USD              |
+| payCurrency     | String | +        | EUR              |
 
 Example HTTP request:
 
@@ -399,14 +671,14 @@ Host: spectrocoin.com
 
 Possible validation error codes: [1, 1001, 1002, 1003, 1004, 1005, 7006, 7007, 7008, 7009, 7010](#error-codes)
 
-Field	| Type  |	Always return	| Example
-------|-------|---------------|--------
-exchangeId	|	Long	|	+	|	50
-payAmount	| Double	| +	| 2.35, 0.046101
-payCurrency	| String  |	+	| EUR
-receiveAmount	| Double	| +	| 19.23, 0.0001257
-receiveCurrency	| String  |	+	| USD
-status  |	String	| -	| Statuses: NEW, PENDING or PAID
+| Field           | Type   | Always return | Example                        |
+| --------------- | ------ | ------------- | ------------------------------ |
+| exchangeId      | Long   | +             | 50                             |
+| payAmount       | Double | +             | 2.35, 0.046101                 |
+| payCurrency     | String | +             | EUR                            |
+| receiveAmount   | Double | +             | 19.23, 0.0001257               |
+| receiveCurrency | String | +             | USD                            |
+| status          | String | -             | Statuses: NEW, PENDING or PAID |
 
 * `NEW` – initial status
 * `PENDING` – waiting for approval
@@ -429,17 +701,17 @@ Operation used to exchange pay currency amount to receive currency.
 
 ### Security
 
-Schema	| Scope
-------|-------
-OAuth2	|	currency_exchange
+| Schema | Scope             |
+| ------ | ----------------- |
+| OAuth2 | currency_exchange |
 
 ### Request
 
-Field	| Type	| Required  |	Example
-------|-------|-----------|--------
-payAmount	| Double	| +	| 1.15, 2.35040101
-receiveCurrency	| String  |	+ |	EUR
-payCurrency |	String	|	+	|	BTC
+| Field           | Type   | Required | Example          |
+| --------------- | ------ | -------- | ---------------- |
+| payAmount       | Double | +        | 1.15, 2.35040101 |
+| receiveCurrency | String | +        | EUR              |
+| payCurrency     | String | +        | BTC              |
 
 Example HTTP request:
 
@@ -463,14 +735,14 @@ Host: spectrocoin.com
 
 Possible validation error codes: [1, 1001, 1002, 1003, 1004, 1005, 7006, 7007, 7008, 7009, 7010](#error-codes)
 
-Field	| Type  |	Always return	| Example
-------|-------|---------------|--------
-exchangeId	|	Long	|	+	|	51
-payAmount	| Double	| +	|	1.15
-payCurrency	| String  |	+	| EUR
-receiveAmount	| Double	| +	| 0.00522326
-receiveCurrency	| String  |	+	| BTC
-status  |	String	| +	| Statuses: `NEW`, `PENDING` or `PAID`
+| Field           | Type   | Always return | Example                              |
+| --------------- | ------ | ------------- | ------------------------------------ |
+| exchangeId      | Long   | +             | 51                                   |
+| payAmount       | Double | +             | 1.15                                 |
+| payCurrency     | String | +             | EUR                                  |
+| receiveAmount   | Double | +             | 0.00522326                           |
+| receiveCurrency | String | +             | BTC                                  |
+| status          | String | +             | Statuses: `NEW`, `PENDING` or `PAID` |
 
 * `NEW` – initial status
 * `PENDING` – waiting for approval
@@ -493,9 +765,9 @@ Operation used to get user accounts information.
 
 ### Security
 
-Schema	| Scope
-------|-------
-OAuth2	|	user_account
+| Schema | Scope        |
+| ------ | ------------ |
+| OAuth2 | user_account |
 
 ### Request
 
@@ -513,15 +785,15 @@ Response is an array of accounts. Account structure is defined bellow.
 
 Possible validation error codes: [1, 1003, 1004](#error-codes)
 
-Field	| Type  |	Always return	| Example
-------|-------|---------------|--------
-accountId	|	Long	|	+	|	2626
-balance	| Double	| +	|	351.76
-availableBalance	| Double	| +	|	351.76
-reservedAmount	| Double	| -	|	0
-currencyName	| String  |	+	| Euro
-currencyCode	| String  |	+	| EUR
-currencySymbol  |	String	| -	| €
+| Field            | Type   | Always return | Example |
+| ---------------- | ------ | ------------- | ------- |
+| accountId        | Long   | +             | 2626    |
+| balance          | Double | +             | 351.76  |
+| availableBalance | Double | +             | 351.76  |
+| reservedAmount   | Double | -             | 0       |
+| currencyName     | String | +             | Euro    |
+| currencyCode     | String | +             | EUR     |
+| currencySymbol   | String | -             | €       |
 
 JSON Response example:
 ```http
@@ -566,20 +838,20 @@ Operation used to get paged transaction history of user account.
 
 ### Security
 
-Schema	| Scope|
-------|-------|
-OAuth2	|	user_account|
+| Schema | Scope        |      |
+| ------ | ------------ | ---- |
+| OAuth2 | user_account |      |
 
 ### Path parameters
-Field	| Type  |	Always return	| Example
-------|-------|---------------|--------
-accountId	|	Long	|	+	|	2626
+| Field     | Type | Always return | Example |
+| --------- | ---- | ------------- | ------- |
+| accountId | Long | +             | 2626    |
 
 ### Request
-Field	| Type  |	Always return	| Example
-------|-------|---------------|--------
-page	|	Integer	|	+	|	1
-size	|	Integer	|	+	|	4
+| Field | Type    | Always return | Example |
+| ----- | ------- | ------------- | ------- |
+| page  | Integer | +             | 1       |
+| size  | Integer | +             | 4       |
 
 Example HTTP request:
 
@@ -595,20 +867,20 @@ Response is an array of transaction info and total transactions count. Historica
 
 Possible validation error codes: [1, 1003, 1004, 6001](#error-codes)
 
-Field	| Type  |	Always return	| Example
-------|-------|---------------|--------
-totalCount	|	Long	|	+	|	425
-history	| Array of **History structure**	| - | |
+| Field      | Type                           | Always return | Example |
+| ---------- | ------------------------------ | ------------- | ------- |
+| totalCount | Long                           | +             | 425     |
+| history    | Array of **History structure** | -             |         |
 
 #### History structure
 
-|Field	| Type  |	Always return	| Example|
-|------|-------|---------------|--------|
-|transactionId	|	String	|	+	|	SC000004848|
-|amount	|	Double	|	+	|	-1.15|
-|description	|	String	|	+	|	EUR sell for exchange. 1.15 EUR|
-|date	|	Date	|	+	|	2016-03-10T14:27:31.000Z|
-|status  |	String	| +	| Statuses: `PENDING`, `PROCESSED`  or `FAILED`|
+| Field         | Type   | Always return | Example                                  |
+| ------------- | ------ | ------------- | ---------------------------------------- |
+| transactionId | String | +             | SC000004848                              |
+| amount        | Double | +             | -1.15                                    |
+| description   | String | +             | EUR sell for exchange. 1.15 EUR          |
+| date          | Date   | +             | 2016-03-10T14:27:31.000Z                 |
+| status        | String | +             | Statuses: `PENDING`, `PROCESSED`  or `FAILED` |
 
 * `PENDING`  – waiting for action
 * `PROCESSED` – transaction completed
@@ -650,115 +922,76 @@ JSON Response example:
       }
    ]}
 ```
-## GET /wallet/deposit/{currency}/last
-Operation used to get last crypto deposit address.
+## GET /send/status/{paymentId}
+
+Operation used to check your crypto send status
 
 ### Security
 
-Schema	| Scope|
-------|-------|
-OAuth2	|	user_account|
+| Schema | Scope        |      |
+| ------ | ------------ | ---- |
+| OAuth2 | user_account |      |
 
 ### Path parameters
-Field	| Type	| Required  |	Example
-------|-------|-----------|--------
-currency	| String	| +	| BTC, DASH
+
+| Field     | Type | Required | Example |
+| --------- | ---- | -------- | ------- |
+| paymentId | Long | +        | 123     |
 
 Example HTTP request:
 
 ```http
-GET https://spectrocoin.com/api/r/wallet/deposit/BTC/last
+GET https://spectrocoin.com/api/r/wallet/send/status/123
 Authorization: Bearer f6f2e0669172035b98a241d6e2afdf531184a400ec8321e1f3cd28756350041fd00c8ff741e0c1bf
 Connection: Keep-Alive
 Host: spectrocoin.com
 ```
+
 ### Response
-Return last crypto address.
 
-Possible validation error codes: [1, 1003, 1004, 1012](#error-codes)
+Return crypto payment info
 
-Field	| Type  |	Always return	| Example
-------|-------|---------------|--------
-btcAddress	|	String	|	-	|	1M4bqMd471TTwNtUSeHPhSW5qQy1Y48p5b
-cryptoAddress	|	String	|	+	|	1M4bqMd471TTwNtUSeHPhSW5qQy1Y48p5b
-currency	|	String	|	+	|	BTC
+Possible validation error codes: [1, 1003, 1004, 3030, 3031](#error-codes)
 
-JSON Response example:
-```http
+| Field          | Type   | Always return | Example                                  |
+| -------------- | ------ | ------------- | ---------------------------------------- |
+| paymentId      | Long   | +             | 123                                      |
+| status         | String | +             | Paid                                     |
+| transactionId  | Long   | +             | 1469                                     |
+| withdrawAmount | Double | +             | 0.02                                     |
+| receiver       | String | +             | TAVISI7ETMVMS2C7CN6V2X6AUUGZQYVJ7GLZYP5O |
+| message        | String | -             | cGkSx732                                 |
+| receiveAmount  | Double | +             | 0.02                                     |
+| currency       | String | +             | XEM, ETH, BTC                            |
+
+JSON Response Example:
+
+```json
 {
-	"btcAddress": "1M4bqMd471TTwNtUSeHPhSW5qQy1Y48p5b",
-	"cryptoAddress": "1M4bqMd471TTwNtUSeHPhSW5qQy1Y48p5b",
-	"currency": "BTC",
+  	"paymentId": 188,
+  	"status": "PAID",
+  	"transactionId": "1469",
+  	"withdrawAmount": 0.02,
+  	"receiver": "TAVISI7ETMVMS2C7CN6V2X6AUUGZQYVJ7GLZYP5O",
+  	"message": "cGkSx732",
+  	"receiveAmount": 0.02,
+  	"currency": "XEM"
 }
 ```
-or
-```http
-{
-	"cryptoAddress": "Xxbit2NkZ4YfAyrgWCSQtRzDjvPJyPFZ4n",
-	"currency": "DASH",
-}
-```
 
-## GET /wallet/deposit/{currency}/fresh
-Operation used to get new crypto deposit address.
 
-### Security
-
-Schema	| Scope|
-------|-------|
-OAuth2	|	user_account|
-
-### Path parameters
-Field	| Type	| Required  |	Example
-------|-------|-----------|--------
-currency	| String	| +	| BTC, DASH
-
-Example HTTP request:
-
-```http
-GET https://spectrocoin.com/api/r/wallet/deposit/BTC/fresh
-Authorization: Bearer f6f2e0669172035b98a241d6e2afdf531184a400ec8321e1f3cd28756350041fd00c8ff741e0c1bf
-Connection: Keep-Alive
-Host: spectrocoin.com
-```
-### Response
-Return new Bitcoin address.
-
-Possible validation error codes: [1, 1003, 1004, 1012](#error-codes)
-
-Field	| Type  |	Always return	| Example
-------|-------|---------------|--------
-btcAddress	|	String	|	-	|	1Bm3ENaZrtrExi56ywM6DWKQgJDmsrMQ41
-cryptoAddress	|	String	|	+	|	1Bm3ENaZrtrExi56ywM6DWKQgJDmsrMQ41
-currency	|	String	|	+	|	BTC
-
-JSON Response example:
-```http
-{
-	"btcAddress": "1Bm3ENaZrtrExi56ywM6DWKQgJDmsrMQ41",
-	"cryptoAddress": "1Bm3ENaZrtrExi56ywM6DWKQgJDmsrMQ41",
-	"currency": "BTC",
-}
-```
-or
-
-```http
-{
-	"cryptoAddress": "Xxbit2NkZ4YfAyrgWCSQtRzDjvPJyPFZ4n",
-	"currency": "DASH",
-}
-```
 
 ## Errors
+
 Invalid request or internal errors will result HTTP response with code **500**.
 
 ### Validation error
 Validation errors will result HTTP response with code **203**. Response is an array of error information:
 
-Field	| Type	| Required  |	Example
-------|-------|-----------|--------
-code	| Short	| +	| 1
-message	| String	| +	| Unable to sell Bitcoin
+| Field   | Type   | Required | Example                |
+| ------- | ------ | -------- | ---------------------- |
+| code    | Short  | +        | 1                      |
+| message | String | +        | Unable to sell Bitcoin |
 
 JSON Response example:
 ```http
@@ -773,35 +1006,39 @@ JSON Response example:
 ### Error codes
 Current available error codes:
 
-Code | Message
-------|-------
-1	|	 Invalid validation (dynamic message)
-97	|	 Unsupported media type
-100	|	 Unexpected error
-1001	|  {value} can't be null
-1002	|	 {amount} should be more than zero
-1003	|	 Forbidden
-1004	|	 Unauthorized
-1005	|	 Unknown value: ???
-1008	|	 Amount should be more than {amount} {currency}
-1012	|	{currency} is not crypto currency!
-2001	|	 Specified client not found for this credentials. client_id: {client_id}, version: {version}
-2002	|	 Application for this user is disabled
-2003	|	 Refresh token expired, please authenticate
-3001	|	 Balance not enough to send
-3002	|	 Invalid email or address
-3003	|	 Invalid email address
-3006	|	 Amount too small to send
-3016	|  Destination count reached. Max allowed destinations: {count}
-3017	|  Data have empty fields
-5003	|	 User not verified
-5021	|  Unsupported multiple coins send to email address
-6001	|	 Member account {accountId} not found for this user.
-7006	|	 Exceeds {period} user pay limit! - {amount} {currency}
-7007	|	 Exceeds {period} user receive limit! - {amount} {currency}
-7008	|	 Unsupported currency exchange.
-7009	|	 Pay amount can't be smaller than {amount} {currency}
-7010	|	 Receive amount can't be smaller than {amount} {currency}
+| Code | Message                                  |
+| ---- | ---------------------------------------- |
+| 1    | Invalid validation (dynamic message)     |
+| 97   | Unsupported media type                   |
+| 100  | Unexpected error                         |
+| 1001 | {value} can't be null                    |
+| 1002 | {amount} should be more than zero        |
+| 1003 | Forbidden                                |
+| 1004 | Unauthorized                             |
+| 1005 | Unknown value: ???                       |
+| 1008 | Amount should be more than {amount} {currency} |
+| 1012 | {currency} is not crypto currency!       |
+| 2001 | Specified client not found for this credentials. client_id: {client_id}, version: {version} |
+| 2002 | Application for this user is disabled    |
+| 2003 | Refresh token expired, please authenticate |
+| 3001 | Balance not enough to send               |
+| 3002 | Invalid email or address                 |
+| 3003 | Invalid email address                    |
+| 3005 | Sender and receiver should be different  |
+| 3006 | Amount too small to send                 |
+| 3016 | Destination count reached. Max allowed destinations: {count} |
+| 3017 | Data have empty fields                   |
+| 3027 | Send currency failed                     |
+| 3030 | Failed to get crypto payment             |
+| 3031 | Bad payment id                           |
+| 5003 | User not verified                        |
+| 5021 | Unsupported multiple coins send to email address |
+| 6001 | Member account {accountId} not found for this user. |
+| 7006 | Exceeds {period} user pay limit! - {amount} {currency} |
+| 7007 | Exceeds {period} user receive limit! - {amount} {currency} |
+| 7008 | Unsupported currency exchange.           |
+| 7009 | Pay amount can't be smaller than {amount} {currency} |
+| 7010 | Receive amount can't be smaller than {amount} {currency} |
 
 
 # Example applications
