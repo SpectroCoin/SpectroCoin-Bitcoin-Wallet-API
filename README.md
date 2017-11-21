@@ -355,7 +355,7 @@ Validation example:
 Response example bulk send with failed transaction:
 
 ```json
-{"sendCurrencyData: [
+{"sendCurrencyData": [
    {
       "paymentId": 205,
       "withdrawAmount": 0.30000000,
