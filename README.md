@@ -355,32 +355,32 @@ Validation example:
 Response example bulk send with failed transaction:
 
 ```json
-{"sendCurrencyData:[
+{"sendCurrencyData: [
  {
-    "paymentId":205,
-    "withdrawAmount":0.30000000,
-    "receiveAmount":0.30000000,
-    "currency":"BTC",
-    "status":"PAID",
-    "receiver":"12KKCFWLPayT8VAbhHRhs7VCS1LPUGGfqv"
+    "paymentId": 205,
+    "withdrawAmount": 0.30000000,
+    "receiveAmount": 0.30000000,
+    "currency": "BTC",
+    "status": "PAID",
+    "receiver": "12KKCFWLPayT8VAbhHRhs7VCS1LPUGGfqv"
  },
  {
-    "paymentId":206,
-    "withdrawAmount":0.30000000,
-    "receiveAmount":0.30000000,
-    "currency":"BTC",
-    "status":"PAID",
-    "receiver":"test@spectrocoin.com"
+    "paymentId": 206,
+    "withdrawAmount": 0.30000000,
+    "receiveAmount": 0.30000000,
+    "currency": "BTC",
+    "status": "PAID",
+    "receiver": "test@spectrocoin.com"
  },
  {
-    "withdrawAmount":0.003,
-    "receiveAmount":0.003,
-    "status":"FAILED",
-    "receiver":"wallet@spectrocoin.com",
+    "withdrawAmount": 0.003,
+    "receiveAmount": 0.003,
+    "status": "FAILED",
+    "receiver": "wallet@spectrocoin.com",
     "error":
       {
-       "code":3005,
-       "message":"Sender and receiver should be different"
+       "code": 3005,
+       "message": "Sender and receiver should be different"
       },
 }
 ]}
