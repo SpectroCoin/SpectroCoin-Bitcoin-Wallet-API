@@ -330,12 +330,12 @@ JSON Response example:
    "currency": "EUR",
    "status": "PAID",
    "receiver": "test@spectrocoin.com",
-   "sendCurrencyData" {
+   "sendCurrencyData": {
     	"paymentId": "153",
    		"withdrawAmount": 13.19,
    		"receiveAmount": 13.19,
    		"currency": "EUR",
-   		"status": "PAID"
+   		"status": "PAID",
   		"receiver": "test@spectrocoin.com"
 	}
 }
@@ -357,31 +357,31 @@ Response example bulk send with failed transaction:
 ```json
 {"sendCurrencyData:[
  {
- "paymentId":205,
- "withdrawAmount":0.30000000,
- "receiveAmount":0.30000000,
- "currency":"BTC",
- "status":"PAID",
- "receiver":"12KKCFWLPayT8VAbhHRhs7VCS1LPUGGfqv"
-},
-{
-  "paymentId":206,
-  "withdrawAmount":0.30000000,
-  "receiveAmount":0.30000000,
-  "currency":"BTC",
-  "status":"PAID",
-  "receiver":"test@spectrocoin.com"
-},
-{
-  "withdrawAmount":0.003,
-  "receiveAmount":0.003,
-  "status":"FAILED",
-  "receiver":"wallet@spectrocoin.com"
-  "error":
-    {
-     "code":3005,
-     "message":"Sender and receiver should be different"
-    },
+    "paymentId":205,
+    "withdrawAmount":0.30000000,
+    "receiveAmount":0.30000000,
+    "currency":"BTC",
+    "status":"PAID",
+    "receiver":"12KKCFWLPayT8VAbhHRhs7VCS1LPUGGfqv"
+ },
+ {
+    "paymentId":206,
+    "withdrawAmount":0.30000000,
+    "receiveAmount":0.30000000,
+    "currency":"BTC",
+    "status":"PAID",
+    "receiver":"test@spectrocoin.com"
+ },
+ {
+    "withdrawAmount":0.003,
+    "receiveAmount":0.003,
+    "status":"FAILED",
+    "receiver":"wallet@spectrocoin.com",
+    "error":
+      {
+       "code":3005,
+       "message":"Sender and receiver should be different"
+      },
 }
 ]}
 ```
@@ -462,7 +462,7 @@ This variable `message` is returned when getting XEM address.
   ```json
   {
       "cryptoAddress": "TAVISI7ETMVMS2C7CN6V2X6AUUGZQYVJ7GLZYP5O",
-      "currency": "XEM"
+      "currency": "XEM",
       "message": "zZnXgCoN"
   }
   ```
@@ -538,7 +538,7 @@ This variable `message` is returned when generating XEM address
   ```json
   {
       "cryptoAddress": "Xxbit2NkZ4YfAyrgWCSQtRzDjvPJyPFZ4n",
-      "currency": "XEM"
+      "currency": "XEM",
       "message": "zZnXgCoN"
   }
   ```
