@@ -194,8 +194,11 @@ Operation to send currency to receiver (bitcoin address, dash address, email add
 | amount   | Double | +        | 13.19, 0.00145021                        |
 | receiver | String | +        | test_cs7@spectrocoin.com, 12KKCFWLPayT8VAbhHRhs7VCS1LPUGGfqv |
 | message  | String | -        | ip8RTyNs                                 |
+| refId    | String | -        | testRandomStringX$#@!                    |
 
 This variable `message` is usable for XEM send.
+
+This variable `refId` should be unique for each send.
 
 
 
@@ -213,6 +216,25 @@ Host: spectrocoin.com
   {
 	"amount": 0.2,
 	"receiver": "12KKCFWLPayT8VAbhHRhs7VCS1LPUGGfqv"
+  }
+]
+```
+
+Example HTTP request send BTC with refId:
+
+```http
+POST https://spectrocoin.com/api/r/wallet/send/BTC
+Authorization: Bearer 42e0f8d6cc2f30de2b1dad7cc2df5455b6d05308e6e06495c766dcb43853ba6d17b77b7623899625
+Connection: Keep-Alive
+Content-Length: 47
+Content-Type: application/json
+Host: spectrocoin.com
+
+[
+  {
+	"amount": 0.002,
+	"receiver": "12KKCFWLPayT8VAbhHRhs7VCS1LPUGGfqv",
+	"refId": "testRandomStringX$#@!"
   }
 ]
 ```
@@ -265,7 +287,7 @@ Host: spectrocoin.com
 
 ### Response
 
-Possible validation error codes: [1, 1001, 1003, 1004, 1005, 1008, 3001, 3002, 3003, 3005, 3006, 3016, 3017 5003, 5021](#error-codes)
+Possible validation error codes: [1, 1001, 1003, 1004, 1005, 1008, 3001, 3002, 3003, 3005, 3006, 3016, 3017, 3032, 5003, 5021](#error-codes)
 
 | Field            | Type             | Always return | Example                                  |
 | ---------------- | ---------------- | ------------- | ---------------------------------------- |
@@ -303,6 +325,7 @@ This variable `message`  is obsolete.
 | status         | String    | -             | Statuses: `NEW`, `PENDING` `FAILED` or `PAID` |
 | receiver       | String    | +             | test@spectrocoin.com                     |
 | message        | String    | -             | cGkSx732                                 |
+| refId          | String    | -             | testRandomStringX$#@!                    |
 | error          | ErrorInfo | -             | "error":{...}                            |
 
 Variable `message` could be returned only if send was made to XEM address and message was specified.
@@ -340,6 +363,32 @@ JSON Response example:
 	}
 }
 ```
+
+
+
+JSON Response example:
+
+```http
+{
+   "paymentId": "159",
+   "withdrawAmount": 0.002,
+   "receiveAmount": 0.002,
+   "currency": "BTC",
+   "status": "PAID",
+   "receiver": "12KKCFWLPayT8VAbhHRhs7VCS1LPUGGfqv",
+   "sendCurrencyData": {
+    	"paymentId": "153",
+   		"withdrawAmount": 0.002,
+   		"receiveAmount": 0.002,
+   		"currency": "EUR",
+   		"status": "PAID",
+   		"refId": "testRandomStringX$#@!",
+  		"receiver": "12KKCFWLPayT8VAbhHRhs7VCS1LPUGGfqv"
+	}
+}
+```
+
+
 
 Validation example:
 
@@ -961,6 +1010,7 @@ Possible validation error codes: [1, 1003, 1004, 3030, 3031](#error-codes)
 | withdrawAmount | Double | +             | 0.02                                     |
 | receiver       | String | +             | TAVISI7ETMVMS2C7CN6V2X6AUUGZQYVJ7GLZYP5O |
 | message        | String | -             | cGkSx732                                 |
+| refId          | String | -             | testRandomStringX$#@!                    |
 | receiveAmount  | Double | +             | 0.02                                     |
 | currency       | String | +             | XEM, ETH, BTC                            |
 
@@ -974,6 +1024,7 @@ JSON Response Example:
   	"withdrawAmount": 0.02,
   	"receiver": "TAVISI7ETMVMS2C7CN6V2X6AUUGZQYVJ7GLZYP5O",
   	"message": "cGkSx732",
+	"refId": "testRandomStringX$#@!",
   	"receiveAmount": 0.02,
   	"currency": "XEM"
 }
@@ -1031,6 +1082,7 @@ Current available error codes:
 | 3027 | Send currency failed                     |
 | 3030 | Failed to get crypto payment             |
 | 3031 | Bad payment id                           |
+| 3032 | You have already sent money with this refId |
 | 5003 | User not verified                        |
 | 5021 | Unsupported multiple coins send to email address |
 | 6001 | Member account {accountId} not found for this user. |
