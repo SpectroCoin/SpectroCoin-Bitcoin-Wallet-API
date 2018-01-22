@@ -1022,7 +1022,7 @@ JSON Response Example:
   	"withdrawAmount": 0.02,
   	"receiver": "TAVISI7ETMVMS2C7CN6V2X6AUUGZQYVJ7GLZYP5O",
   	"message": "cGkSx732",
-    "refId": "testRandomStringX$#@!",
+	"refId": "testRandomStringX$#@!",
   	"receiveAmount": 0.02,
   	"currency": "XEM"
 }
