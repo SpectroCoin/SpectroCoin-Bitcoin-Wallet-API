@@ -198,6 +198,8 @@ Operation to send currency to receiver (bitcoin address, dash address, email add
 
 This variable `message` is usable for XEM send.
 
+This variable `refId` should be unique for each send.
+
 
 
 Example HTTP request:
